@@ -20,7 +20,7 @@ class Doodlebug;
 //Class Organism (Super Class)
 class Organism{
 public:
-    virtual void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) = 0;
+    virtual void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) = 0;
     virtual void breed() = 0;
     bool valid_move(int x, int y) {
         return (x > -1 && x < 21 && y > -1 && y < 21);
@@ -63,7 +63,7 @@ public:
     Ant();
     Ant(int x, int y);
     //need the ant vector and 
-    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) {
+    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) {
         srand(time(NULL));
         int direction = rand() % 4 + 1;
         // switch(direction){
@@ -88,7 +88,7 @@ class Doodlebug : public Organism{
 public:
     Doodlebug();
     Doodlebug(int x, int y);
-    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) override {
+    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) override {
         //
         int x = this->getX();
         int y = this->getY();
@@ -103,31 +103,55 @@ public:
             for(int i = 0;i <ants.size();i++){
                 if(ants[i].getX() == x+1 && ants[i].getY() == y){
                     ants[i].setAlive(false);
+                    break;
                 }
             }
-            
+            db_grid[x][y].setX(x+1);
         }else if(grid[x-1][y] == "a"){
             grid[x-1][y] = "d";
-            this->setX(x-1);
+             this->setX(x-1);
+            for(int i = 0;i <ants.size();i++){
+                if(ants[i].getX() == x-1 && ants[i].getY() == y){
+                    ants[i].setAlive(false);
+                    break;
+                }
+            }
+            db_grid[x][y].setX(x-1);
         }else if(grid[x][y+1] == "a"){
             grid[x][y+1] = "d";
             this->setY(y+1);
+            for(int i = 0;i <ants.size();i++){
+                if(ants[i].getX() == x && ants[i].getY() == y+1){
+                    ants[i].setAlive(false);
+                    break;
+                }
+            }
+            db_grid[x][y].setY(y+1);
         }else if(grid[x][y-1] == "a"){
             grid[x][y-1] = "d";
             this->setY(y-1);
+            for(int i = 0;i <ants.size();i++){
+                if(ants[i].getX() == x && ants[i].getY() == y-1){
+                    ants[i].setAlive(false);
+                    break;
+                }
+            }
+            db_grid[x][y].setY(y-1);
+            db_grid[x][y-1] = db_grid[x][y];
+            db_grid[x][y] = 
         }else{
             srand(time(NULL));
             int direction = rand() % 4 + 1;
-            // switch(direction){
-            //     //up
-            //     case 1:
-            //     //down
-            //     case 2:
-            //     //left
-            //     case 3:
-            //     //right
-            //     case 4:
-            // }
+            switch(direction){
+                //up
+                case 1:
+                //down
+                case 2:
+                //left
+                case 3:
+                //right
+                case 4:
+            }
         }
         //this is random move, but first need to check if ant in cell above below or not..
 
