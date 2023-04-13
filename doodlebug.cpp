@@ -14,11 +14,13 @@ const int COLS = 20;
 //Enter is pressed
 
 //
+class Ant;
+class Doodlebug;
 
 //Class Organism (Super Class)
 class Organism{
 public:
-    virtual void move(string (&grid)[ROWS][COLS]) = 0;
+    virtual void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) = 0;
     virtual void breed() = 0;
     bool valid_move(int x, int y) {
         return (x > -1 && x < 21 && y > -1 && y < 21);
@@ -39,9 +41,9 @@ public:
     int getBC() const{ return breed_counter;}
     void add_to_BC(){ breed_counter += 1;}
     
-    //Value Get
+    //Value Get Set
     string getValue()const {return value;}
-
+    void setValue(string val){ value = val;}
     Organism();
 private:
     bool alive;
@@ -60,7 +62,8 @@ class Ant : public Organism{
 public:
     Ant();
     Ant(int x, int y);
-    void move(string (&grid)[ROWS][COLS]) override {
+    //need the ant vector and 
+    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) {
         srand(time(NULL));
         int direction = rand() % 4 + 1;
         // switch(direction){
@@ -73,44 +76,45 @@ public:
     void breed()override{
 
     }
-    //Value Get
-    string getValue()const {return value;}
-
-private:
-    string value;
-    int x_pos;
-    int y_pos;
 
 };
 
 //Ant Constructor
-Ant::Ant() : Organism(), value("o"){}
-Ant::Ant(int x, int y) : Organism(), x_pos(x), y_pos(y), value("o"){}
+Ant::Ant() : Organism() { setValue("o ");}
+Ant::Ant(int x, int y) : Organism() { setX(x); setY(y); setValue("o "); }
 
 //Class Doodlebug (Sub-Class)
 class Doodlebug : public Organism{
 public:
     Doodlebug();
     Doodlebug(int x, int y);
-    void move(string (&grid)[ROWS][COLS]) override {
+    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants) override {
         //
         int x = this->getX();
         int y = this->getY();
-        if(grid[x+1][y] == "o"){
-            grid[x+1][y] = this->getValue();
+        if(grid[x+1][y] == "a"){
+            //we found an ant, set the grid to a d
+            grid[x+1][y] = "d";
+            //change the x in the vector to the correct x
             this->setX(x+1);
-
-        }else if(grid[x-1][y] == "o"){
-            grid[x-1][y] = this->getValue();
+            //need to change the grid of ants and the vector of ants and the grid of doodlebugs positions as well though...
+            //how would you even know which ant it is?
+            //i guess iterate over each?
+            for(int i = 0;i <ants.size();i++){
+                if(ants[i].getX() == x+1 && ants[i].getY() == y){
+                    ants[i].setAlive(false);
+                }
+            }
+            
+        }else if(grid[x-1][y] == "a"){
+            grid[x-1][y] = "d";
             this->setX(x-1);
-        }else if(grid[x][y+1] == "o"){
-            grid[x][y+1] = this->getValue();
+        }else if(grid[x][y+1] == "a"){
+            grid[x][y+1] = "d";
             this->setY(y+1);
-
-        }else if(grid[x][y-1] == "o"){
-            grid[x][y-1] = this->getValue();
+        }else if(grid[x][y-1] == "a"){
+            grid[x][y-1] = "d";
             this->setY(y-1);
-
         }else{
             srand(time(NULL));
             int direction = rand() % 4 + 1;
@@ -136,18 +140,14 @@ public:
     int getAC(){return alive_counter;}
     void addAC(){alive_counter+=1;}
 
-    //Value Get
-    string getValue()const {return value;}
 
 private:
     int alive_counter;
-    int x_pos;
-    int y_pos;
-    string value;
+
 };  
 
-Doodlebug::Doodlebug() : Organism(), value("X"), alive_counter(0){}
-Doodlebug::Doodlebug(int x, int y) : Organism(), x_pos(x), y_pos(y), value("X"), alive_counter(0){}
+Doodlebug::Doodlebug() : Organism(), alive_counter(0){setValue("X ");}
+Doodlebug::Doodlebug(int x, int y) : Organism(), alive_counter(0){setValue("X "); setX(x); setY(y);}
 
 
 int main(){
@@ -196,7 +196,7 @@ int main(){
             } else if (organism_type[i][j] == "a") {
                 cout << ant_grid[i][j].getValue();
             } else {
-                cout << "-";
+                cout << "- ";
             }
         }
         cout<<endl;
@@ -206,7 +206,14 @@ int main(){
     while(true){
         getline(cin,input);
         if(input.empty()){
-        
+            //So we have 3 data structures:
+            //Vector of Bugs/Ants
+            //Grid of Bugs/Ants
+            //String Grid...
+            //iterate through the doodlebug vector..
+            // for(int i = 0;i<doodlebugs.size();i++){
+            //     doodlebugs[i].move(organism_type,ants);
+            // }
             time_step+=1;
         }else{
             break;
