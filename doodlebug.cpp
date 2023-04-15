@@ -20,8 +20,8 @@ class Doodlebug;
 //Class Organism (Super Class)
 class Organism{
 public:
-    virtual void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) = 0;
-    virtual void breed() = 0;
+    virtual void move(string (&grid)[ROWS][COLS]) = 0;
+    virtual void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) = 0;
     bool valid_move(int x, int y) {
         return (x > -1 && x < 21 && y > -1 && y < 21);
     }
@@ -63,7 +63,7 @@ public:
     Ant();
     Ant(int x, int y);
     //need the ant vector and 
-    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) {
+    void move(string (&grid)[ROWS][COLS]) {
         srand(time(NULL));
         int direction = rand() % 4 + 1;
         // switch(direction){
@@ -73,7 +73,7 @@ public:
         //     case 4:
         // }
     }
-    void breed()override{
+    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) {
 
     }
 
@@ -88,8 +88,7 @@ class Doodlebug : public Organism{
 public:
     Doodlebug();
     Doodlebug(int x, int y);
-    void move(string (&grid)[ROWS][COLS], vector<Ant>& ants, Doodlebug (&db_grid)[ROWS][COLS]) override {
-        //
+    bool eat(string (&grid)[ROWS][COLS], vector<Ant>& ants){
         int x = this->getX();
         int y = this->getY();
         if(grid[x+1][y] == "a"){
@@ -97,7 +96,6 @@ public:
             grid[x+1][y] = "d";
             //change the x in the vector to the correct x
             this->setX(x+1);
-            //need to change the grid of ants and the vector of ants and the grid of doodlebugs positions as well though...
             //how would you even know which ant it is?
             //i guess iterate over each?
             for(int i = 0;i <ants.size();i++){
@@ -106,17 +104,23 @@ public:
                     break;
                 }
             }
-            db_grid[x][y].setX(x+1);
+            //set alive counter to 0
+            this->resetAC();
+            grid[x][y] = "";
+            return true;
         }else if(grid[x-1][y] == "a"){
             grid[x-1][y] = "d";
-             this->setX(x-1);
+            this->setX(x-1);
             for(int i = 0;i <ants.size();i++){
                 if(ants[i].getX() == x-1 && ants[i].getY() == y){
                     ants[i].setAlive(false);
                     break;
                 }
             }
-            db_grid[x][y].setX(x-1);
+            grid[x][y] = "";
+            //set alive counter to 0
+            this->resetAC();
+            return true;
         }else if(grid[x][y+1] == "a"){
             grid[x][y+1] = "d";
             this->setY(y+1);
@@ -126,7 +130,10 @@ public:
                     break;
                 }
             }
-            db_grid[x][y].setY(y+1);
+            grid[x][y] = "";
+            //set alive counter to 0
+            this->resetAC();
+            return true;
         }else if(grid[x][y-1] == "a"){
             grid[x][y-1] = "d";
             this->setY(y-1);
@@ -136,33 +143,62 @@ public:
                     break;
                 }
             }
-            db_grid[x][y].setY(y-1);
-            db_grid[x][y-1] = db_grid[x][y];
-            db_grid[x][y] = 
+            grid[x][y] = "";
+            this->resetAC();
+            return true;
         }else{
+            return false;
+        }
+    }
+    void move(string (&grid)[ROWS][COLS])  {
+            int x = this->getX();
+            int y = this->getY();
             srand(time(NULL));
             int direction = rand() % 4 + 1;
             switch(direction){
                 //up
                 case 1:
+                if(valid_move(x,y+1) && grid[x][y+1].empty()){
+                    this->setY(y+1);
+                    grid[x][y] = "";
+                    grid[x][y+1] = "d";
+                }
+                break;
                 //down
                 case 2:
+                if(valid_move(x,y-1) && grid[x][y-1].empty()){
+                    this->setY(y-1);
+                    grid[x][y] = "";
+                    grid[x][y-1] = "d";
+                 }
+                 break;
                 //left
                 case 3:
+                if(valid_move(x-1,y) && grid[x-1][y].empty()){
+                    this->setX(x-1);
+                    grid[x][y] = "";
+                    grid[x-1][y] = "d";
+                }
+                break;
                 //right
                 case 4:
+                if(valid_move(x+1,y) && grid[x+1][y].empty()){
+                    this->setX(x+1);
+                    grid[x][y] = "";
+                    grid[x+1][y] = "d";
+                }
+                break;
             }
         }
-        //this is random move, but first need to check if ant in cell above below or not..
+    
+    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) {
 
     }
-    void breed()override{
 
-    }
-
-    //AC Get Set
+    //AC Get Add Reset
     int getAC(){return alive_counter;}
     void addAC(){alive_counter+=1;}
+    void resetAC(){alive_counter = 0;}
 
 
 private:
@@ -178,8 +214,6 @@ int main(){
     srand(time(NULL));
     vector<Ant> ants;
     vector<Doodlebug> doodlebugs;
-    Ant ant_grid[ROWS][COLS];
-    Doodlebug doodlebug_grid[ROWS][COLS];
     string organism_type[ROWS][COLS];
     string input;
     int time_step = 0;
@@ -190,7 +224,6 @@ int main(){
         if (organism_type[x][y].empty()) {
             Doodlebug d(x, y);
             doodlebugs.push_back(d);
-            doodlebug_grid[x][y] = d;
             organism_type[x][y] = "d";
         } else {
             --i;
@@ -203,7 +236,6 @@ int main(){
         if (organism_type[x][y].empty()) {
             Ant a(x, y);
             ants.push_back(a);
-            ant_grid[x][y] = a;
             organism_type[x][y] = "a";
         } else {
             --i;
@@ -216,9 +248,9 @@ int main(){
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
             if (organism_type[i][j] == "d") {
-                cout << doodlebug_grid[i][j].getValue();
+                cout << "X ";
             } else if (organism_type[i][j] == "a") {
-                cout << ant_grid[i][j].getValue();
+                cout << "o ";
             } else {
                 cout << "- ";
             }
@@ -232,13 +264,47 @@ int main(){
         if(input.empty()){
             //So we have 3 data structures:
             //Vector of Bugs/Ants
-            //Grid of Bugs/Ants
             //String Grid...
             //iterate through the doodlebug vector..
-            // for(int i = 0;i<doodlebugs.size();i++){
-            //     doodlebugs[i].move(organism_type,ants);
-            // }
+            for(int i = 0;i<doodlebugs.size();i++){
+                //check if it's alive
+                if(doodlebugs[i].getAlive()){
+                    if(!doodlebugs[i].eat(organism_type,ants))
+                    //if you can't eat then move
+                        doodlebugs[i].move(organism_type);
+
+                    //check if it has eaten an ant in 3 time steps
+                    if(doodlebugs[i].getAC() >= 3){
+                        doodlebugs[i].setAlive(false);
+                        organism_type[doodlebugs[i].getX()][doodlebugs[i].getY()] = "";
+                    }else{
+                        doodlebugs[i].addAC();
+                    }
+                    if(doodlebugs[i].getBC() % 8 == 0){
+                        doodlebugs[i].breed(organism_type,doodlebugs, ants);
+                    }else{
+                        doodlebugs[i].add_to_BC();
+                    } 
+                }
+            }
             time_step+=1;
+            cout<<"World at Time "<<time_step<<":"<<endl;
+            cout<<endl;
+            //print the grid
+            for (int i = 0; i < ROWS; i++) {
+                for (int j = 0; j < COLS; j++) {
+                    if (organism_type[i][j] == "d") {
+                        cout << "X ";
+                    } else if (organism_type[i][j] == "a") {
+                        cout << "o ";
+                    } else {
+                        cout << "- ";
+                    }
+                }
+                cout<<endl;
+            }
+            cout<<endl;
+            cout<<"Press ENTER to continue"<<endl;
         }else{
             break;
         }
