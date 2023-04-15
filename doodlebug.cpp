@@ -21,10 +21,12 @@ class Doodlebug;
 class Organism{
 public:
     virtual void move(string (&grid)[ROWS][COLS]) = 0;
-    virtual void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) = 0;
+    virtual void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& new_doodlebugs,vector<Ant>& new_ants) = 0;
+
     bool valid_move(int x, int y) {
-        return (x > -1 && x < 21 && y > -1 && y < 21);
+        return (x >= 0 && x < ROWS && y >= 0 && y < COLS);
     }
+
     //Alive Get Set
     void setAlive(bool tf){alive = tf;}
     bool getAlive() const{return alive;}
@@ -40,6 +42,7 @@ public:
     //BC Get Set
     int getBC() const{ return breed_counter;}
     void add_to_BC(){ breed_counter += 1;}
+    void resetBC(){breed_counter = 0;}
     
     //Value Get Set
     string getValue()const {return value;}
@@ -153,7 +156,6 @@ public:
     void move(string (&grid)[ROWS][COLS])  {
             int x = this->getX();
             int y = this->getY();
-            srand(time(NULL));
             int direction = rand() % 4 + 1;
             switch(direction){
                 //up
@@ -191,8 +193,44 @@ public:
             }
         }
     
-    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) {
-
+    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& new_db,vector<Ant>& ants) {
+        int x = this->getX();
+        int y = this->getY();
+        int direction = rand() % 4 + 1;
+        switch(direction){
+            //up
+            case 1:
+            if(valid_move(x,y+1) && grid[x][y+1].empty()){
+                Doodlebug db(x,y+1);
+                grid[x][y+1] = "d";
+                new_db.push_back(db);
+            }
+            break;
+            //down
+            case 2:
+            if(valid_move(x,y-1) && grid[x][y-1].empty()){
+                Doodlebug db(x,y-1);
+                grid[x][y-1] = "d";
+                new_db.push_back(db);
+                }
+            break;
+            //left
+            case 3:
+            if(valid_move(x-1,y) && grid[x-1][y].empty()){
+                Doodlebug db(x-1,y);
+                grid[x-1][y] = "d";
+                new_db.push_back(db);
+            }
+            break;
+            //right
+            case 4:
+            if(valid_move(x+1,y) && grid[x+1][y].empty()){
+                Doodlebug db(x+1,y);
+                grid[x+1][y] = "d";
+                new_db.push_back(db);
+            }
+            break;
+        }
     }
 
     //AC Get Add Reset
@@ -214,6 +252,8 @@ int main(){
     srand(time(NULL));
     vector<Ant> ants;
     vector<Doodlebug> doodlebugs;
+    vector<Ant> new_ants;
+    vector<Doodlebug> new_doodlebugs;
     string organism_type[ROWS][COLS];
     string input;
     int time_step = 0;
@@ -280,8 +320,13 @@ int main(){
                     }else{
                         doodlebugs[i].addAC();
                     }
-                    if(doodlebugs[i].getBC() % 8 == 0){
-                        doodlebugs[i].breed(organism_type,doodlebugs, ants);
+                    if(doodlebugs[i].getBC() == 8){
+                        doodlebugs[i].breed(organism_type,new_doodlebugs, new_ants);
+                        doodlebugs[i].resetBC();
+                    for (int i = 0; i < new_doodlebugs.size(); i++) {
+                        doodlebugs.push_back(new_doodlebugs[i]);
+                    }
+                    new_doodlebugs.clear();  
                     }else{
                         doodlebugs[i].add_to_BC();
                     } 
