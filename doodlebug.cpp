@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 const int ROWS = 20;
@@ -67,19 +68,67 @@ public:
     Ant(int x, int y);
     //need the ant vector and 
     void move(string (&grid)[ROWS][COLS]) {
-        srand(time(NULL));
+        int x = this->getX();
+        int y = this->getY();
         int direction = rand() % 4 + 1;
-        // switch(direction){
-        //     case 1:
-        //     case 2:
-        //     case 3:
-        //     case 4:
-        // }
+        switch(direction){
+            //up
+            case 1:
+            if(valid_move(x,y+1) && grid[x][y+1].empty()){
+                this->setY(y+1);
+                grid[x][y] = "";
+                grid[x][y+1] = "a";
+            }
+            break;
+            //down
+            case 2:
+            if(valid_move(x,y-1) && grid[x][y-1].empty()){
+                this->setY(y-1);
+                grid[x][y] = "";
+                grid[x][y-1] = "a";
+                }
+                break;
+            //left
+            case 3:
+            if(valid_move(x-1,y) && grid[x-1][y].empty()){
+                this->setX(x-1);
+                grid[x][y] = "";
+                grid[x-1][y] = "a";
+            }
+            break;
+            //right
+            case 4:
+            if(valid_move(x+1,y) && grid[x+1][y].empty()){
+                this->setX(x+1);
+                grid[x][y] = "";
+                grid[x+1][y] = "a";
+            }
+            break;
+        }
     }
-    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& doodlebugs,vector<Ant>& ants) {
-
-    }
-
+    void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& new_db,vector<Ant>& new_a) {
+        int x = this->getX();
+        int y = this->getY();
+        if(valid_move(x,y+1) && grid[x][y+1].empty()){
+                Ant ant(x,y+1);
+                grid[x][y+1] = "a";
+                new_a.push_back(ant);
+        }else if(valid_move(x,y-1) && grid[x][y-1].empty()){
+                Ant ant(x,y-1);
+                grid[x][y-1] = "a";
+                new_a.push_back(ant);
+        }else if(valid_move(x-1,y) && grid[x-1][y].empty()){
+                Ant ant(x-1,y);
+                grid[x-1][y] = "a";
+                new_a.push_back(ant);
+        }else if(valid_move(x+1,y) && grid[x+1][y].empty()){
+                Ant ant(x+1,y);
+                grid[x+1][y] = "a";
+                new_a.push_back(ant);
+        }else{
+            return;
+        }
+        }
 };
 
 //Ant Constructor
@@ -94,7 +143,7 @@ public:
     bool eat(string (&grid)[ROWS][COLS], vector<Ant>& ants){
         int x = this->getX();
         int y = this->getY();
-        if(grid[x+1][y] == "a"){
+        if(grid[x+1][y] == "a" && valid_move(x+1,y)){
             //we found an ant, set the grid to a d
             grid[x+1][y] = "d";
             //change the x in the vector to the correct x
@@ -102,7 +151,7 @@ public:
             //how would you even know which ant it is?
             //i guess iterate over each?
             for(int i = 0;i <ants.size();i++){
-                if(ants[i].getX() == x+1 && ants[i].getY() == y){
+                if(ants[i].getX() == x+1 && ants[i].getY() == y && ants[i].getAlive()){
                     ants[i].setAlive(false);
                     break;
                 }
@@ -111,11 +160,11 @@ public:
             this->resetAC();
             grid[x][y] = "";
             return true;
-        }else if(grid[x-1][y] == "a"){
+        }else if(grid[x-1][y] == "a" && valid_move(x-1,y)){
             grid[x-1][y] = "d";
             this->setX(x-1);
             for(int i = 0;i <ants.size();i++){
-                if(ants[i].getX() == x-1 && ants[i].getY() == y){
+                if(ants[i].getX() == x-1 && ants[i].getY() == y && ants[i].getAlive()){
                     ants[i].setAlive(false);
                     break;
                 }
@@ -124,11 +173,11 @@ public:
             //set alive counter to 0
             this->resetAC();
             return true;
-        }else if(grid[x][y+1] == "a"){
+        }else if(grid[x][y+1] == "a" && valid_move(x,y+1)){
             grid[x][y+1] = "d";
             this->setY(y+1);
             for(int i = 0;i <ants.size();i++){
-                if(ants[i].getX() == x && ants[i].getY() == y+1){
+                if(ants[i].getX() == x && ants[i].getY() == y+1 && ants[i].getAlive()){
                     ants[i].setAlive(false);
                     break;
                 }
@@ -137,11 +186,11 @@ public:
             //set alive counter to 0
             this->resetAC();
             return true;
-        }else if(grid[x][y-1] == "a"){
+        }else if(grid[x][y-1] == "a" && valid_move(x,y-1)){
             grid[x][y-1] = "d";
             this->setY(y-1);
             for(int i = 0;i <ants.size();i++){
-                if(ants[i].getX() == x && ants[i].getY() == y-1){
+                if(ants[i].getX() == x && ants[i].getY() == y-1 && ants[i].getAlive()){
                     ants[i].setAlive(false);
                     break;
                 }
@@ -196,42 +245,27 @@ public:
     void breed(string (&grid)[ROWS][COLS],vector<Doodlebug>& new_db,vector<Ant>& ants) {
         int x = this->getX();
         int y = this->getY();
-        int direction = rand() % 4 + 1;
-        switch(direction){
-            //up
-            case 1:
-            if(valid_move(x,y+1) && grid[x][y+1].empty()){
+        if(valid_move(x,y+1) && grid[x][y+1].empty()){
                 Doodlebug db(x,y+1);
                 grid[x][y+1] = "d";
                 new_db.push_back(db);
-            }
-            break;
-            //down
-            case 2:
-            if(valid_move(x,y-1) && grid[x][y-1].empty()){
+        }else if(valid_move(x,y-1) && grid[x][y-1].empty()){
                 Doodlebug db(x,y-1);
                 grid[x][y-1] = "d";
                 new_db.push_back(db);
-                }
-            break;
-            //left
-            case 3:
-            if(valid_move(x-1,y) && grid[x-1][y].empty()){
+        }else if(valid_move(x-1,y) && grid[x-1][y].empty()){
                 Doodlebug db(x-1,y);
                 grid[x-1][y] = "d";
                 new_db.push_back(db);
-            }
-            break;
-            //right
-            case 4:
-            if(valid_move(x+1,y) && grid[x+1][y].empty()){
+        }else if(valid_move(x+1,y) && grid[x+1][y].empty()){
                 Doodlebug db(x+1,y);
                 grid[x+1][y] = "d";
                 new_db.push_back(db);
-            }
-            break;
+        }else{
+            return;
         }
     }
+    
 
     //AC Get Add Reset
     int getAC(){return alive_counter;}
@@ -314,24 +348,42 @@ int main(){
                         doodlebugs[i].move(organism_type);
 
                     //check if it has eaten an ant in 3 time steps
-                    if(doodlebugs[i].getAC() >= 3){
+                    if(doodlebugs[i].getAC() == 3){
                         doodlebugs[i].setAlive(false);
                         organism_type[doodlebugs[i].getX()][doodlebugs[i].getY()] = "";
                     }else{
                         doodlebugs[i].addAC();
                     }
-                    if(doodlebugs[i].getBC() == 8){
+                    if(doodlebugs[i].getBC() == 8 && doodlebugs[i].getAlive()){
                         doodlebugs[i].breed(organism_type,new_doodlebugs, new_ants);
                         doodlebugs[i].resetBC();
-                    for (int i = 0; i < new_doodlebugs.size(); i++) {
-                        doodlebugs.push_back(new_doodlebugs[i]);
-                    }
-                    new_doodlebugs.clear();  
                     }else{
                         doodlebugs[i].add_to_BC();
                     } 
                 }
             }
+            for (int i = 0; i < new_doodlebugs.size(); i++) {
+                doodlebugs.push_back(new_doodlebugs[i]);
+            }
+            new_doodlebugs.clear();  
+            //iterate through the ant vector..
+            for(int i = 0; i < ants.size(); i++){
+                if(ants[i].getAlive()){
+                    ants[i].move(organism_type);
+                    if(ants[i].getBC() == 3 && ants[i].getAlive()){
+                        ants[i].breed(organism_type,new_doodlebugs,new_ants);
+                        ants[i].resetBC();
+                    }else{
+                        ants[i].add_to_BC();
+                    }
+                }
+            }
+            for (int i = 0; i < new_ants.size();i++){
+                ants.push_back(new_ants[i]);
+            }
+            new_ants.clear();
+
+
             time_step+=1;
             cout<<"World at Time "<<time_step<<":"<<endl;
             cout<<endl;
@@ -353,33 +405,6 @@ int main(){
         }else{
             break;
         }
-            //Iterate through each doodlebug and take the following actions:
-            //Check if there is an ant in the cell above, below, right left
-                //if yes then move to that cell
-                //kill the ant in that cell
-                //set ant eaten counter to 0 ()
-                //add 1 to survival counter
-                    //check if survival counter == 8
-                    //if yes then spawn new doodlebug
-                    //if no then nothing
-            //Check if there is a doodlebug or goes off the grid in cell l,r,a,b
-                //stay in current cell if yes
-                //change x,y pos if no
-                //add 1 to ant eaten counter
-                    //if ant eaten counter == 3 then "kill" doodlebug
-                //add 1 to survival counter
-                    //check if survival counter == 8
-                    //if yes then spawn new doodlebug
-                    //if no then nothing
-            //Iterate through each ant and take the following actions
-            //Try to move to a cell
-                //if occupied then stay
-            //add 1 to breed counter
-                //if breed counter == 3
-                //check if u is empty if not then down if not then left if not then right
-                //if one is empty then place new ant into that cell
-                //add new ant to the array of ants.. probably needs to be a vector
-                //breed counter == 0
         
     }
 
